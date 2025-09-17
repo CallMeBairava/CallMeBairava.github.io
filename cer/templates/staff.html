@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Portal</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 20px; }
+
+    /* Table styles */
+    table {
+      border-collapse: collapse;
+      width: 90%;
+      margin: 0 auto 30px auto;
+      background: #e6f0ff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    th, td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid #ccc;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    tr:nth-child(even) { background-color: #cce0ff; }
+
+    /* Buttons */
+    button {
+      padding: 6px 12px; margin: 5px;
+      border: none; border-radius: 5px; cursor: pointer;
+    }
+    .approve { background: #28a745; color: white; }
+    .reject { background: #dc3545; color: white; }
+
+    /* Upload section */
+    .upload-container {
+      width: 90%; margin: 0 auto 20px auto;
+      background: #d9eaff; padding: 15px;
+      border-radius: 8px; text-align: center;
+    }
+    input[type="file"] { margin: 10px 0; }
+    .upload-btn { background: #007bff; color: white; }
+  </style>
+</head>
+<body>
+  <h1>Staff Certificate Requests</h1>
+
+  <!-- Certificate Upload -->
+  <div class="upload-container">
+    <h3>Upload Certificate Template</h3>
+    <input type="file" id="certificateFile" accept="image/*"><br>
+    <button class="upload-btn" onclick="uploadTemplate()">Upload</button>
+    <div id="uploadMsg"></div>
+  </div>
+
+  <!-- Requests Table -->
+  <table id="requestsTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Student Name</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function loadRequests() {
+      const tbody = document.querySelector("#requestsTable tbody");
+      tbody.innerHTML = "";
+      try {
+        const res = await fetch("/api/get_requests");
+        const requests = await res.json();
+
+        requests.forEach(req => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${req.id}</td>
+            <td>${req.student_name}</td>
+            <td>${req.status}</td>
+            <td>
+              ${req.status === 'pending' ? `
+              <button class="approve" onclick="approveRequest(${req.id})">Approve</button>
+              <button class="reject" onclick="rejectRequest(${req.id})">Reject</button>` : ''}
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = "<tr><td colspan='4' style='color:red;'>Failed to load requests.</td></tr>";
+      }
+    }
+
+    async function approveRequest(id) {
+      try {
+        await fetch(`/api/approve/${id}`, { method: "POST" });
+        alert("Request approved.");
+        loadRequests();
+      } catch (err) { console.error(err); alert("Failed to approve request."); }
+    }
+
+    async function rejectRequest(id) {
+      try {
+        await fetch(`/api/reject/${id}`, { method: "POST" });
+        alert("Request rejected.");
+        loadRequests();
+      } catch (err) { console.error(err); alert("Failed to reject request."); }
+    }
+
+    async function uploadTemplate() {
+      const fileInput = document.getElementById("certificateFile");
+      if (!fileInput.files.length) {
+        alert("Select a file first.");
+        return;
+      }
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      try {
+        const res = await fetch("/api/upload_template", { method: "POST", body: formData });
+        const data = await res.json();
+        document.getElementById("uploadMsg").innerText = data.message;
+      } catch (err) {
+        console.error(err);
+        alert("Failed to upload template.");
+      }
+    }
+
+    loadRequests();
+  </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Certificate Status</title>
+</head>
+<body>
+{% if req %}
+    {% if req.status == "approved" %}
+        <p>✅ Your request is approved!</p>
+        <a href="/download/{{ req.id }}">Download Certificate</a>
+    {% elif req.status == "pending" %}
+        <p>⏳ Your request is still pending.</p>
+    {% else %}
+        <p>❌ Your request was rejected.</p>
+    {% endif %}
+{% else %}
+    <p>No request found.</p>
+{% endif %}
+<a href="/">Back</a>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f9f9f9; text-align: center; padding: 30px; }
+    h1 { margin-bottom: 20px; }
+    input, button {
+      padding: 10px; margin: 8px; font-size: 1em;
+      border-radius: 5px; border: 1px solid #ccc;
+    }
+    button { background: #007bff; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    #certificateContainer { position: relative; width: 850px; height: 600px; margin: 20px auto; display: none; }
+    #certificateImage { width: 100%; height: 100%; display: block; }
+    #certNameOverlay {
+      position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+      width: 400px; text-align: center; font-size: 22px; font-weight: bold;
+      color: #4b3b00; font-family: 'Georgia', serif; white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Student Certificate Request</h1>
+
+  <input type="text" id="studentName" placeholder="Enter your full name" /><br>
+  <button onclick="requestCertificate()">Submit Request</button>
+  <button onclick="checkStatus()">Check Status</button>
+
+  <div id="statusMsg"></div>
+
+  <!-- Certificate container (hidden until approved) -->
+  <div id="certificateContainer">
+    <img id="certificateImage" src="static/Gold and Brown Elegant Professional Certificate of Appreciation Certificate (1).png" alt="Certificate" />
+    <div id="certNameOverlay"></div>
+  </div>
+  <button onclick="downloadCertificate()" id="downloadBtn" style="display:none;">Download PDF</button>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+    async function requestCertificate() {
+      const studentName = document.getElementById("studentName").value.trim();
+      if (studentName === "") {
+        alert("Please enter your name.");
+        return;
+      }
+      try {
+        const res = await fetch("/api/request_certificate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: studentName })
+        });
+        const data = await res.json();
+        alert(data.message);
+        document.getElementById("studentName").value = "";
+      } catch (err) {
+        alert("Error submitting request.");
+        console.error(err);
+      }
+    }
+
+    async function checkStatus() {
+      const studentName = document.getElementById("studentName").value.trim();
+      if (studentName === "") {
+        alert("Enter your name to check status.");
+        return;
+      }
+      try {
+        const res = await fetch("/api/check_status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: studentName })
+        });
+        const req = await res.json();
+        const statusDiv = document.getElementById("statusMsg");
+
+        if (req.error) {
+          statusDiv.innerHTML = `<p style='color:red;'>${req.error}</p>`;
+          return;
+        }
+
+        if (req.status === "pending") {
+          statusDiv.innerHTML = "<p style='color:orange;'>Your request is still pending approval.</p>";
+        } else if (req.status === "rejected") {
+          statusDiv.innerHTML = "<p style='color:red;'>Your request was rejected.</p>";
+        } else if (req.status === "approved") {
+          statusDiv.innerHTML = "<p style='color:green;'>Approved! You can now download your certificate.</p>";
+          showCertificate(req.id, req.student_name);
+        }
+      } catch (err) {
+        alert("Error checking status.");
+        console.error(err);
+      }
+    }
+
+    function showCertificate(id, name) {
+      document.getElementById("certNameOverlay").innerText = name;
+      document.getElementById("certificateContainer").style.display = "block";
+      document.getElementById("downloadBtn").style.display = "inline-block";
+      window.certificateId = id; // store ID for download
+    }
+
+    function downloadCertificate() {
+      if (!window.certificateId) return;
+      window.open(`/api/download/${window.certificateId}`, "_blank");
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Certificate Portal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-container {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      width: 320px;
+      text-align: center;
+    }
+    h2 { margin-bottom: 20px; }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover { background: #0056b3; }
+    .error { color: red; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <h2>Login</h2>
+    <select id="userType">
+      <option value="student">Student</option>
+      <option value="staff">Staff</option>
+    </select>
+    <input type="password" id="password" placeholder="Enter Password" />
+    <button onclick="login()">Login</button>
+    <div class="error" id="errorMsg"></div>
+  </div>
+
+  <script>
+    const passwords = {
+      student: "student123",
+      staff: "staff123"
+    };
+
+    function login() {
+      const type = document.getElementById("userType").value;
+      const pwd = document.getElementById("password").value;
+      const errorMsg = document.getElementById("errorMsg");
+
+      if (pwd === passwords[type]) {
+        // Redirect to Flask routes
+        if (type === "student") {
+          window.location.href = "/student";
+        } else {
+          window.location.href = "/staff";
+        }
+      } else {
+        errorMsg.innerText = "Incorrect password. Try again.";
+      }
+    }
+  </script>
+
+</body>
+</html>
